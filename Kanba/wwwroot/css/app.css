@@ -112,6 +112,15 @@ h2 {
     box-shadow: none !important;
     border: none!important;
 }
+.mud-drop-item {
+    border: none !important;
+}
+.mud-card-header{
+    justify-content:space-evenly;
+}
+.mud-typography {
+    text-align: right;
+}
 
 .loading-progress {
     position: relative;
