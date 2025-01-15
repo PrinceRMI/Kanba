@@ -25,6 +25,7 @@ public class MockLeadService : ILeadService
                 Name = GetRandomUzbekName(),
                 Phone = $"{random.Next(100000000, 999999999)}", // 9-digit format
                 Status = status,
+                Invisible = status == LeadStatus.Lost,
                 Source = (LeadSource)random.Next(0, 3),
                 CreatedAt = DateTime.Now.AddDays(-random.Next(1, 60)),
                 ModifiedAt = DateTime.Now.AddDays(-random.Next(0, 30)),
@@ -61,6 +62,7 @@ public class MockLeadService : ILeadService
             existingLead.Source = lead.Source;
             existingLead.ModifiedAt = DateTime.Now;
             existingLead.Notes = lead.Notes;
+
             existingLead.InterestedCourse = lead.InterestedCourse;
         }
         return new ValueTask<Lead>(existingLead ?? lead);

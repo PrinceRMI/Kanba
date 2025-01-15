@@ -2,70 +2,79 @@
 @using Kanba.Abstractions
 @using MudBlazor
 @inject ILeadService LeadService
+@inject ICourseService CourseService
 @inject MudBlazor.IDialogService DialogService
 
-<MudDialog MaxWidth="MaxWidth.Small">
+<MudDialog >
     <DialogContent>
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h5">Yangi Lead qo'shish</MudText>
+        <MudStack Spacing="8">
+        
 
-            <MudTextField @bind-Value="newLead.Name" Label="Name (required)" Required="true" />
+            <MudTextField @bind-Value="newLead.Name" Label="Ismi (required)" Required="true" />
+
             <MudSelect T="string" Label="Source (required)" @bind-Value="newLead.SourceString" Required="true" Dense="true">
-                <MudSelectItem Value="@String.Empty">(All)</MudSelectItem>
                 @foreach (LeadSource src in Enum.GetValues(typeof(LeadSource)))
                 {
                     <MudSelectItem Value="@src.ToString()">@src</MudSelectItem>
                 }
             </MudSelect>
-            <MudTextField @bind-Value="newLead.InterestedCourseName" Label="Interested Course (required)" Required="true" />
 
-            <MudTextField @bind-Value="newLead.Phone" Label="Phone (optional)" />
+            <MudSelect T="Course" Label="Qiziqayotgan kurs (required)" @bind-Value="newLead.InterestedCourse" Required="true" Dense="true">
+                @foreach (var course in courses)
+                {
+                    <MudSelectItem Value="@course">@course.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField @bind-Value="newLead.Phone" Label="Telefon raqami (optional)" />
+
+            <MudTextField @bind-Value="newLead.Address" Label="Manzili (optional)" />
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Save</MudButton>
-        <MudButton Color="Color.Inherit" Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Saqlash</MudButton>
+        <MudButton Color="Color.Inherit" Variant="Variant.Text" OnClick="Cancel">Bekor qilish</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    // Dialogni yopish uchun MudDialogInstance'ni cascading parameter orqali olamiz
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
 
-    // Yangi lead qo'shish uchun model (biz qo'shimcha maydon sifatida InterestedCourseName ni ishlatamiz)
     private LeadCreationModel newLead = new LeadCreationModel
         {
-            // Default status always New
             Status = LeadStatus.New,
             CreatedAt = DateTime.Now,
-            ModifiedAt = DateTime.Now,
-            Invisible = false,
-            Source = LeadSource.Telegram // default qiymat
+            ModifiedAt = DateTime.Now
         };
+
+    private List<Course> courses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        courses = (await CourseService.GetCoursesAsync()).ToList();
+    }
 
     private async Task Save()
     {
         if (string.IsNullOrWhiteSpace(newLead.Name) ||
-            string.IsNullOrWhiteSpace(newLead.InterestedCourseName) ||
-            string.IsNullOrWhiteSpace(newLead.SourceString))
+            string.IsNullOrWhiteSpace(newLead.SourceString) ||
+            newLead.InterestedCourse == null)
         {
-            // Agar required maydonlar bo'sh bo'lsa, hech qanday save qilinmaydi.
+            // Agar required maydonlar to'ldirilmagan bo'lsa, saqlanmaydi
             return;
         }
 
-        // Yangilik: Source dropdowndan olingan qiymatni enum ga aylantiramiz
         if (Enum.TryParse<LeadSource>(newLead.SourceString, out var parsedSource))
             newLead.Source = parsedSource;
         else
-            newLead.Source = LeadSource.Telegram; // fallback
+            newLead.Source = LeadSource.Telegram;
 
-        // Yangi Lead modelini yaratamiz
         var lead = new Lead
             {
                 Name = newLead.Name,
                 Phone = newLead.Phone,
                 Source = newLead.Source,
-                InterestedCourse = new Course { Name = newLead.InterestedCourseName },
+                InterestedCourse = newLead.InterestedCourse,
                 Status = LeadStatus.New,
                 CreatedAt = DateTime.Now,
                 ModifiedAt = DateTime.Now,
@@ -77,18 +86,16 @@
 
     private void Cancel() => MudDialog.Close(DialogResult.Cancel());
 
-    // Yangi lead qo'shish uchun qo'shimcha model
     public class LeadCreationModel
     {
         public string? Name { get; set; }
-        // Biz Source ni string sifatida olamiz va keyin enum ga aylantiramiz
-        public string SourceString { get; set; } = String.Empty;
-        public LeadSource Source { get; set; } = LeadSource.Telegram;
-        public string? InterestedCourseName { get; set; }
+        public string SourceString { get; set; } = string.Empty;
+        public LeadSource Source { get; set; }
+        public Course? InterestedCourse { get; set; }
         public string? Phone { get; set; }
+        public string? Address { get; set; }
         public LeadStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? ModifiedAt { get; set; }
-        public bool Invisible { get; set; }
     }
 }

@@ -44,7 +44,7 @@
                 <MudSelectItem Value="@string.Empty"></MudSelectItem>
                 @foreach (var course in _allCourses)
                 {
-                    <MudSelectItem Value="@course">@course</MudSelectItem>
+                    <MudSelectItem Value="@course.Name">@course.Name</MudSelectItem>
                 }
             </MudSelect>
         </MudStack>
@@ -61,9 +61,8 @@
             @foreach (var column in _columns)
             {
                 <MudPaper Elevation="1"
-                          Class="pa-2 mx-1 mb-2 d-flex flex-column"
-                          Style="flex: 1 1 0; min-width: 300px;">
-
+                          Class="pa-2 mx-1 mb-2 d-flex flex-column mud-background-gray rounded-lg"
+                          Style="flex: 1 1 0; min-width: 270px;">
                     <MudToolBar Dense="true" Class="py-2">
                         <MudText Typo="Typo.subtitle1" Color="@GetColorForColumn(column)" Class="mr-2">
                             <b>@column</b>
@@ -79,12 +78,10 @@
                                         <MudIcon Icon="@Icons.Material.Filled.Visibility" />
                                         <MudSwitch T="bool"
                                                    Checked="_showInvisible.TryGetValue(column, out var visible) ? visible : false"
-                                                   CheckedChanged="@((bool value) => _showInvisible[column] = value)"
+                                                   CheckedChanged="@((bool value) => ToggleVisibility(column, value))"
                                                    Color="Color.Info"
                                                    Label="Show Invisible" />
                                     </MudStack>
-
-
                                 </MudMenuItem>
                                 <MudMenuItem OnClick="@(() => SortColumnByModifiedAt(column))">
                                     Sort by ModifiedAt
@@ -111,13 +108,12 @@
         </ChildContent>
 
         <ItemRenderer>
-           
-            <MudCard Class="ma-2 rounded-lg"
-                     Elevation="4"
-                     Style="cursor: pointer;"
+            <MudCard Class="ma-3 rounded-lg"
+                     Elevation="1"
+                     Style="cursor: pointer; background-color: #333; ;"
                      @onclick="@(() => ShowLeadDetails(@context))">
 
-                <MudCardHeader>
+                <MudCardHeader Style="padding:5px;">
                     <CardHeaderContent>
                         <MudText Typo="Typo.h6">
                             @(@context.Name?.Substring(0, Math.Min(@context.Name?.Length ?? 0, 15)))
@@ -146,8 +142,9 @@
                         </div>
                     </CardHeaderAvatar>
                 </MudCardHeader>
+
                 <MudCardContent>
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                         <MudIcon Icon="@Icons.Material.Rounded.LocalPhone" Color="Color.Info" />
                         <MudText>@FormatPhoneNumber(@context.Phone)</MudText>
                     </MudStack>
@@ -161,7 +158,6 @@
     private readonly string[] _columns = { "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" };
 
     private Dictionary<string, bool> _showInvisible = new();
-
     private MudDropContainer<Lead> dropContainer = default!;
     private List<Lead> leads = new();
 
@@ -172,10 +168,12 @@
     private bool _sortAsc;
 
     private List<string> _allSources = new() { "Telegram", "Instagram", "Referral" };
-    private List<string> _allCourses = new() { "Web", "Math", "Programming", "Design" };
+    private List<Course> _allCourses = new();
 
     protected override async Task OnInitializedAsync()
     {
+        _allCourses = (await CourseService.GetCoursesAsync()).ToList();
+
         foreach (var col in _columns)
             _showInvisible[col] = false;
 
@@ -207,14 +205,13 @@
         if (!string.IsNullOrEmpty(selectedCourse))
         {
             if (lead.InterestedCourse == null
-                || !lead.InterestedCourse.Name.Equals(selectedCourse, StringComparison.OrdinalIgnoreCase)) 
+                || !lead.InterestedCourse.Name.Equals(selectedCourse, StringComparison.OrdinalIgnoreCase))
                 return false;
         }
 
         return true;
     }
 
-   
     private IEnumerable<Lead> DisplayedLeads
     {
         get
@@ -229,7 +226,6 @@
         }
     }
 
-
     private bool IsInColumn(Lead lead, string zoneIdentifier)
     {
         return GetColumnForStatus(lead.Status) == zoneIdentifier;
@@ -240,7 +236,12 @@
         StateHasChanged();
     }
 
-  
+    private void ToggleVisibility(string column, bool value)
+    {
+        _showInvisible[column] = value;
+        StateHasChanged();
+    }
+
     private async Task LeadUpdated(MudItemDropInfo<Lead> dropInfo)
     {
         if (dropInfo.Item != null)
@@ -250,14 +251,13 @@
 
             await LeadService.UpdateLeadAsync(dropInfo.Item);
 
-            // O‘z ro‘yxatimizni yangilaymiz (sort maqsadida)
+            // Tartib maqsadida ro'yxatni qayta sort qilamiz
             leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
             dropContainer.Refresh();
             StateHasChanged();
         }
     }
 
-  
     private async Task UpdateLeadStatus(Lead lead, LeadStatus newStatus)
     {
         lead.Status = newStatus;
@@ -269,7 +269,6 @@
         dropContainer.Refresh();
         StateHasChanged();
     }
-
 
     private LeadStatus GetStatusForColumn(string column)
     {
@@ -283,7 +282,6 @@
         };
     }
 
-  
     private string GetColumnForStatus(LeadStatus status)
     {
         return status switch
@@ -296,12 +294,10 @@
         };
     }
 
-  
     private void ShowAddLeadDialog()
     {
         DialogService.Show<AddNewLeadDialog>("Yangi Lead");
     }
-
 
     private void ShowLeadDetails(Lead lead)
     {
@@ -309,14 +305,12 @@
         DialogService.Show<LeadDetailsDialog>("Lead Details", parameters);
     }
 
-  
     private void SortColumnByModifiedAt(string column)
     {
         _sortAsc = !_sortAsc;
         dropContainer.Refresh();
         StateHasChanged();
     }
-
 
     private Color GetColorForColumn(string column)
     {
@@ -330,7 +324,6 @@
         };
     }
 
- 
     private Color GetColorForStatus(LeadStatus status)
     {
         return status switch
@@ -348,7 +341,6 @@
             _ => Color.Default
         };
     }
-
 
     public static string FormatPhoneNumber(string? input)
     {
