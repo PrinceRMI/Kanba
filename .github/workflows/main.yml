@@ -1,31 +1,27 @@
-name: Build and Deploy Blazor Web App
+name: Deploy BlazorTestApp to GitHub Pages
 
 on:
   push:
     branches:
-      - master
+      - master  # Change to your default branch if it's not 'main'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0' # Loyihangizning .NET versiyasini kiriting
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0'  # Change to your target .NET version
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Publish Blazor WebAssembly app
+        run: dotnet publish -c Release -o ./publish
 
-    - name: Build project
-      run: dotnet publish -c Release -o ./publish
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./publish/wwwroot
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./publish/wwwroot
