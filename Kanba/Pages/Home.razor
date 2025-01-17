@@ -18,6 +18,13 @@
                    OnClick="@ShowAddLeadDialog">
             Qo'shish
         </MudButton>
+        <MudDateRangePicker T="DateTime"
+                            Label="Sanalar"
+                            @bind-DateRange="dateRange"
+                            Required="true"
+                            MaxDateRange="1"
+                            MinDateRange="1"
+                            Style="width:250px; font-size:small" />
 
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
             <MudTextField T="string"
@@ -47,10 +54,11 @@
                     <MudSelectItem Value="@course.Name">@course.Name</MudSelectItem>
                 }
             </MudSelect>
+
+    
         </MudStack>
     </MudStack>
 
-    <!-- Drag-and-Drop Container -->
     <MudDropContainer T="Lead"
                       Items="@DisplayedLeads"
                       ItemDropped="LeadUpdated"
@@ -90,7 +98,6 @@
                         </MudMenu>
                     </MudToolBar>
 
-                    <!-- DropZone for each column -->
                     <MudDropZone T="Lead"
                                  Identifier="@column"
                                  Class="p-2 hide-scrollbar"
@@ -172,22 +179,8 @@
                 <MudText>@FormatPhoneNumber(lead.Phone)</MudText>
             </MudStack>
         </MudCardContent>
-    </MudCard>;
-
-    protected override async Task OnInitializedAsync()
-    {
-        leads = (await LeadService.GetLeadsAsync())
-            .OrderByDescending(l => l.ModifiedAt)
-            .ToList();
-
-        foreach (var col in _columns)
-        {
-            _showInvisible[col] = false;
-            _sortAscByColumn[col] = false;  // Default sort: descending
-        }
-        _allCourses = (await CourseService.GetCoursesAsync()).ToList();
-
-    }
+    </MudCard>
+    ;
 
     private bool IsVisibleByFilter(Lead lead)
     {
@@ -215,7 +208,40 @@
             return false;
         }
 
+        // Date Range filter
+        if (dateRange != null)
+        {
+            var leadDate = lead.ModifiedAt;
+            if (leadDate < dateRange.Start || leadDate > dateRange.End)
+            {
+                return false;
+            }
+        }
+
         return true;
+    }
+
+
+    private void GlobalFilterChanged() => StateHasChanged();
+    private DateRange? dateRange = new DateRange
+        {
+            Start = DateTime.Now.AddDays(-7), // Default: 7 days ago
+            End = DateTime.Now // Default: today
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        leads = (await LeadService.GetLeadsAsync())
+            .OrderByDescending(l => l.ModifiedAt)
+            .ToList();
+
+        foreach (var col in _columns)
+        {
+            _showInvisible[col] = false;
+            _sortAscByColumn[col] = false;  // Default sort: descending
+        }
+        _allCourses = (await CourseService.GetCoursesAsync()).ToList();
+
     }
 
 
@@ -235,7 +261,6 @@
         return GetColumnForStatus(lead.Status) == zoneIdentifier;
     }
 
-    private void GlobalFilterChanged() => StateHasChanged();
 
     private void ToggleVisibility(string column, bool value)
     {
