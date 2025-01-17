@@ -287,7 +287,19 @@
         _ => "Yangi Lidlar"
     };
 
-    private void ShowAddLeadDialog() => DialogService.Show<AddNewLeadDialog>("Yangi Lead");
+
+    private async void ShowAddLeadDialog()
+    {
+        var dialog = DialogService.Show<AddNewLeadDialog>("Yangi Lead");
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Lead newLead)
+        {
+            leads.Add(newLead);
+            leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
+            StateHasChanged();
+        }
+    }
 
     private void ShowLeadDetails(Lead lead)
     {
