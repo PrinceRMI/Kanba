@@ -81,18 +81,8 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" />
                             </ActivatorContent>
                             <ChildContent>
-                                <MudMenuItem>
-                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                        <MudIcon Icon="@Icons.Material.Filled.Visibility" />
-                                        <MudSwitch T="bool"
-                                                   Checked="_showInvisible.TryGetValue(column, out var visible) ? visible : false"
-                                                   CheckedChanged="@((bool value) => ToggleVisibility(column, value))"
-                                                   Color="Color.Info"
-                                                   Label="Show Invisible" />
-                                    </MudStack>
-                                </MudMenuItem>
                                 <MudMenuItem OnClick="@(() => SortColumnByModifiedAt(column))">
-                                    Sort by ModifiedAt
+                                    Tartiblash
                                 </MudMenuItem>
                             </ChildContent>
                         </MudMenu>
@@ -173,7 +163,7 @@
             </CardHeaderAvatar>
         </MudCardHeader>
 
-        <MudCardContent>
+        <MudCardContent Style="padding-top:8px;">
             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
                 <MudIcon Icon="@Icons.Material.Rounded.LocalPhone" Color="Color.Info" />
                 <MudText>@FormatPhoneNumber(lead.Phone)</MudText>
