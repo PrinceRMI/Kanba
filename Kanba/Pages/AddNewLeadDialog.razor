@@ -1,41 +1,45 @@
 ﻿@using Kanba.Models
 @using Kanba.Abstractions
 @using MudBlazor
+@using System.Text.RegularExpressions
 @inject ILeadService LeadService
 @inject ICourseService CourseService
 @inject MudBlazor.IDialogService DialogService
+@inject MudBlazor.ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
-        <MudForm>
+        <MudForm @ref="form" OnValidSubmit="Save" OnInvalidSubmit="HandleInvalidSubmit">
             <MudStack Spacing="5">
-                <!-- Name -->
-                <MudTextField @bind-Value="newLead.Name" Label="Ismi (required)" Required="true" Immediate="true"
-                              HelperText="Ismni kiriting" Variant="Variant.Outlined" />
+                <!-- Ism maydoni -->
+                <MudTextField @bind-Value="newLead.Name" Label="Ismi " Required="true" Immediate="true"
+                              HelperText="Iltimos, ismingizni kiriting." Variant="Variant.Outlined"
+                              ErrorText="Ism maydoni to'ldirilishi shart!" />
 
-                <!-- Source -->
-                <MudSelect T="string" Label="Source (required)" @bind-Value="newLead.SourceString" Required="true" Dense="true">
+                <!-- Source maydoni -->
+                <MudSelect T="string" Label="Source (required)" @bind-Value="newLead.SourceString" Required="true" Dense="true" Clearable="true" ClearIcon="@Icons.Material.Filled.Clear">
                     @foreach (LeadSource src in Enum.GetValues(typeof(LeadSource)))
                     {
                         <MudSelectItem Value="@src.ToString()">@src</MudSelectItem>
                     }
                 </MudSelect>
 
-                <!-- Interested Course -->
-                <MudSelect T="Course" Label="Qiziqayotgan kurs (required)" @bind-Value="newLead.InterestedCourse" Required="true" Dense="true">
+                <!-- Kurs maydoni -->
+                <MudSelect T="Course" Label="Qiziqayotgan kurs" @bind-Value="newLead.InterestedCourse" Required="true" Dense="true" Clearable="true" ClearIcon="@Icons.Material.Filled.Clear">
                     @foreach (var course in courses)
                     {
                         <MudSelectItem Value="@course">@course.Name</MudSelectItem>
                     }
                 </MudSelect>
 
-                <!-- Phone -->
-                <MudTextField @bind-Value="newLead.Phone" Label="Telefon raqami (optional)" Immediate="true"
-                              HelperText="Telefon raqamni kiriting (ixtiyoriy)" Variant="Variant.Outlined" />
+                <!-- Telefon raqami -->
+                <MudTextField @bind-Value="newLead.Phone" Label="Telefon raqami (+998 xxx xx xx)" Immediate="true"
+                              HelperText="Telefon raqamni kiriting (ixtiyoriy)" Variant="Variant.Outlined"
+                              Pattern="^\+998\d{9}$" ErrorText="Telefon raqami +998xxxxxxxxx formatda bo'lishi kerak" Required="true" />
 
-                <!-- Address -->
-                <MudTextField @bind-Value="newLead.Address" Label="Manzili (optional)" Immediate="true"
-                              HelperText="Manzilni kiriting (ixtiyoriy)" Variant="Variant.Outlined" />
+                <!-- Manzil -->
+                <MudTextField @bind-Value="newLead.Address" Label="Manzili (ixtiyoriy)" Immediate="true"
+                              HelperText=" " Variant="Variant.Outlined" />
             </MudStack>
         </MudForm>
     </DialogContent>
@@ -48,6 +52,8 @@
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudForm? form;
 
     private LeadCreationModel newLead = new()
         {
@@ -65,19 +71,35 @@
 
     private async Task Save()
     {
-        if (string.IsNullOrWhiteSpace(newLead.Name) ||
-            string.IsNullOrWhiteSpace(newLead.SourceString) ||
-            newLead.InterestedCourse == null)
+        if (form == null)
         {
-            // Agar required maydonlar to'ldirilmagan bo'lsa, saqlanmaydi
             return;
         }
 
+        // Formani tekshirish
+        await form.Validate();
+
+        // Telefon raqami validatsiyasi
+        if (string.IsNullOrEmpty(newLead.Phone) || !Regex.IsMatch(newLead.Phone, @"^\+998\d{9}$"))
+        {
+            Snackbar.Add("Telefon raqami +998xxxxxxxxx formatda bo'lishi kerak.", Severity.Error);
+            return;
+        }
+
+        // Validatsiya muvaffaqiyatsiz bo‘lsa
+        if (!form.IsValid)
+        {
+            Snackbar.Add("Iltimos, barcha majburiy maydonlarni to'ldiring va telefon raqamini to'g'ri formatda kiriting.", Severity.Error);
+            return;
+        }
+
+        // Lead manba qiymatini olish
         if (Enum.TryParse<LeadSource>(newLead.SourceString, out var parsedSource))
             newLead.Source = parsedSource;
         else
             newLead.Source = LeadSource.Telegram;
 
+        // Lead obyekti yaratish
         var lead = new Lead
             {
                 Name = newLead.Name,
@@ -90,7 +112,13 @@
                 Invisible = false
             };
 
+        // Dialogni yopish va leadni qaytarish
         MudDialog.Close(DialogResult.Ok(lead));
+    }
+
+    private void HandleInvalidSubmit()
+    {
+        Snackbar.Add("Iltimos, barcha majburiy maydonlarni to'ldiring va telefon raqamini to'g'ri formatda kiriting.", Severity.Error);
     }
 
     private void Cancel() => MudDialog.Close(DialogResult.Cancel());
@@ -108,3 +136,5 @@
         public DateTime? ModifiedAt { get; set; }
     }
 }
+
+

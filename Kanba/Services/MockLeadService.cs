@@ -16,7 +16,7 @@ public class MockLeadService : ILeadService
         var random = new Random();
         var courses = courseService.GetCoursesAsync().Result.ToList();
 
-        for (int i = 1; i <= 1000; i++)
+        for (int i = 1; i <= 50; i++)
         {
             var status = (LeadStatus)random.Next(0, 10);
             leads.Add(new Lead

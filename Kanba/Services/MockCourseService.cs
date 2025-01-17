@@ -12,16 +12,47 @@ public class MockCourseService : ICourseService
     {
         courses = new List<Course>
         {
-            new Course { Id = 1, Name = "Web Dasturlash", Description = "HTML, CSS, va JavaScript asoslari", Price = 1500000, DurationInWeeks = 12, Instructor = "Alisher Qodirov", StartDate = DateTime.Now.AddDays(7), IsActive = true },
-            new Course { Id = 2, Name = "Python Asoslari", Description = "Python dasturlash tili bo'yicha boshlang'ich kurs", Price = 1200000, DurationInWeeks = 8, Instructor = "Gulnora Karimova", StartDate = DateTime.Now.AddDays(14), IsActive = true },
-            new Course { Id = 3, Name = "Ma'lumotlar Bazasi", Description = "SQL va PostgreSQL bo'yicha amaliy kurs", Price = 1800000, DurationInWeeks = 10, Instructor = "Bobur Alimov", StartDate = DateTime.Now.AddDays(21), IsActive = true },
-            new Course { Id = 4, Name = "Java Dasturlash", Description = "Java dasturlash tili va OOP kontseptsiyalari", Price = 2000000, DurationInWeeks = 16, Instructor = "Dilshod Tursunov", StartDate = DateTime.Now.AddDays(30), IsActive = true },
-            new Course { Id = 5, Name = "Mobile Dasturlash", Description = "Android va iOS uchun mobil ilovalar yaratish", Price = 2500000, DurationInWeeks = 20, Instructor = "Nodira Azizova", StartDate = DateTime.Now.AddDays(45), IsActive = true },
-            new Course { Id = 6, Name = "Frontend Frameworklar", Description = "React va Vue.js bo'yicha amaliy kurs", Price = 1800000, DurationInWeeks = 14, Instructor = "Jamshid Nurmatov", StartDate = DateTime.Now.AddDays(60), IsActive = true },
-            new Course { Id = 7, Name = "Backend Dasturlash", Description = "Node.js va Express.js orqali server yaratish", Price = 2200000, DurationInWeeks = 16, Instructor = "Sarvar Abdullayev", StartDate = DateTime.Now.AddDays(75), IsActive = true },
-            new Course { Id = 8, Name = "DevOps Asoslari", Description = "Docker, Kubernetes va CI/CD jarayonlari", Price = 2800000, DurationInWeeks = 18, Instructor = "Oybek Toshpulatov", StartDate = DateTime.Now.AddDays(90), IsActive = true },
-            new Course { Id = 9, Name = "Kiberhavfsizlik", Description = "Tarmoq va dasturiy ta'minot xavfsizligi asoslari", Price = 3000000, DurationInWeeks = 20, Instructor = "Malika Rahimova", StartDate = DateTime.Now.AddDays(105), IsActive = true },
-            new Course { Id = 10, Name = "Sun'iy Intellekt", Description = "Machine Learning va Deep Learning asoslari", Price = 3500000, DurationInWeeks = 24, Instructor = "Akmal Xolmatov", StartDate = DateTime.Now.AddDays(120), IsActive = true },
+           new Course {Id = 1, Name = "Phonics 1", Description = "Kids kursi 1-darajasi"},
+            new Course {Id = 2, Name = "Phonics 2", Description = "Kids kursi 2-darajasi"},
+            new Course {Id = 3, Name = "Phonics 3", Description = "Kids kursi 3-darajasi"},
+            new Course {Id = 4, Name = "Phonics 4", Description = "Kids kursi 4-darajasi"},
+
+            // English Courses - Junior
+            new Course {Id = 5, Name = "Starters", Description = "Kids bitiruvchilari uchun"},
+
+            // English Courses - General
+            new Course { Id = 6, Name = "The Spire 1", Description = "A1 darajasidagi ingliz tili kursi", },
+            new Course {Id = 7, Name = "The Spire 2", Description = "A2 darajasidagi ingliz tili kursi"},
+            new Course {Id = 8, Name = "The Spire 3", Description = "Pre-B1 darajasidagi ingliz tili kursi"},
+            new Course {Id = 9, Name = "The Spire 4", Description = "B1 darajasidagi ingliz tili kursi"},
+            new Course {Id = 10, Name = "The Spire 5", Description = "Pre-B2 darajasidagi ingliz tili kursi"},
+            new Course {Id = 11, Name = "The Spire 6", Description = "B2 darajasidagi ingliz tili kursi"},
+
+            // English Courses - Intensive
+            new Course {Id = 12, Name = "Level 7", Description = "IELTS va CEFR uchun intensiv 1-bosqich"},
+            new Course {Id = 13, Name = "Level 8", Description = "IELTS va CEFR uchun intensiv 2-bosqich"},
+                
+            // IT Courses - Bits
+            new Course {Id = 14, Name = "Scratch", Description = "Scratch bilan dasturlashga kirish"},
+            new Course {Id = 15, Name = "Lego Mindstorms (Begin)", Description = "Lego Mindstorms bilan robototexnikaning asoslari"},
+
+            // IT Courses - Bytes
+            new Course {Id = 16, Name = "Extended Scratch", Description = "Kengaytirilgan Scratch dasturlash"},
+            new Course {Id = 17, Name = "Lego (Spike Prime)", Description = "Spike Prime bilan robototexnikaning kengaytirilgan kursi"},
+            new Course {Id = 18, Name = "Savodxonlik", Description = "Raqsodxonlik kursi"},  
+            new Course {Id = 19, Name = "App Inventor", Description = "Mobil ilovalar ishlab chiqish asoslari"},
+            new Course {Id = 20, Name = "Robotics (Extended)", Description = "5 oylik kengaytirilgan robototexnika kursi"},
+                
+            // IT Courses - Junior
+            new Course {Id = 21, Name = "Extended Python", Description = "Kengaytirilgan Python dasturlash"},
+            new Course {Id = 22, Name = "AutoCAD", Description = "Kompyuter yordamida loyihalash kursi"},
+
+            // IT Courses - Foundation
+            new Course {Id = 23, Name = "C++", Description = "C++ dasturlash kursi"},
+
+            // IT Courses - Professional
+            new Course {Id = 24, Name = "Frontend", Description = "Frontend mutaxassisligi kursi"},
+            new Course {Id = 25, Name = "Backend", Description = "Backend mutaxassisligi kursi"}
             // ... (add 10 more courses with similar Uzbek-themed information)
         };
     }

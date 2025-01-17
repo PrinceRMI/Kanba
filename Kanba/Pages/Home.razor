@@ -117,6 +117,7 @@
     </MudDropContainer>
 </MudContainer>
 
+
 @code {
     private readonly string[] _columns = { "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" };
 
@@ -149,16 +150,16 @@
                                      Variant="Variant.Text"
                                      Color="@GetColorForStatus(lead.Status)"
                                      Size="Size.Small">
-                                @lead.Status
+                                @TranslateStatus(lead.Status)
                             </MudChip>
                         </ActivatorContent>
                         <ChildContent>
                             @foreach (LeadStatus status in Enum.GetValues(typeof(LeadStatus)))
-                        {
-                            <MudMenuItem OnClick="@(() => UpdateLeadStatus(lead, status))">
-                                @status
-                            </MudMenuItem>
-                        }
+                            {
+                                <MudMenuItem OnClick="@(() => UpdateLeadStatus(lead, status))">
+                                    @TranslateStatus(status)
+                                </MudMenuItem>
+                            }
                         </ChildContent>
                     </MudMenu>
                 </div>
@@ -287,6 +288,20 @@
         _ => "Yangi Lidlar"
     };
 
+    private string TranslateStatus(LeadStatus status) => status switch
+    {
+        LeadStatus.New => "Yangi",
+        LeadStatus.Phone => "Telefon qilingan",
+        LeadStatus.Contacted => "Bog'langan",
+        LeadStatus.Recontact => "Qayta bog'langan",
+        LeadStatus.Incomplete => "Tugallanmagan",
+        LeadStatus.Registered => "Ro'yxatdan o'tgan",
+        LeadStatus.AttendedTrialLesson => "Sinov darsida qatnashgan",
+        LeadStatus.Acquired => "Qabul qilingan",
+        LeadStatus.NotAcquired => "Qabul qilinmagan",
+        LeadStatus.Lost => "Yo'qotilgan",
+        _ => "Yangi"
+    };
 
     private async void ShowAddLeadDialog()
     {
