@@ -2,15 +2,15 @@
 @using Kanba.Models
 @using Kanba.Abstractions
 @using System.Text.RegularExpressions
-
 @using MudBlazor
 
 @inject ILeadService LeadService
 @inject ICourseService CourseService
 @inject IDialogService DialogService
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-4">
 
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-4">
+    <!-- Header with buttons and filters -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="ma-4">
         <MudButton Variant="Variant.Outlined"
                    EndIcon="@Icons.Material.Filled.Add"
@@ -32,16 +32,16 @@
                           DebounceInterval="300"
                           OnDebounceIntervalElapsed="GlobalFilterChanged" />
 
-            <MudSelect T="string" Label="Source" Style="width:150px" @bind-Value="selectedSource" Dense="true">
-                <MudSelectItem Value="@string.Empty"></MudSelectItem>
+            <MudSelect T="string" Label="Source" Style="width:150px" @bind-Value="selectedSource" Dense="true"
+                       Clearable="true" ClearIcon="@Icons.Material.Filled.Clear">
                 @foreach (var src in _allSources)
                 {
                     <MudSelectItem Value="@src">@src</MudSelectItem>
                 }
             </MudSelect>
 
-            <MudSelect T="string" Label="Course" Style="width:150px" @bind-Value="selectedCourse" Dense="true">
-                <MudSelectItem Value="@string.Empty"></MudSelectItem>
+            <MudSelect T="string" Label="Course" Style="width:150px" @bind-Value="selectedCourse" Dense="true"
+                       Clearable="true" ClearIcon="@Icons.Material.Filled.Clear">
                 @foreach (var course in _allCourses)
                 {
                     <MudSelectItem Value="@course.Name">@course.Name</MudSelectItem>
@@ -50,13 +50,13 @@
         </MudStack>
     </MudStack>
 
+    <!-- Drag-and-Drop Container -->
     <MudDropContainer T="Lead"
-                      @ref="dropContainer"
                       Items="@DisplayedLeads"
-                      ItemsSelector="@((lead, zoneIdentifier) => IsInColumn(lead, zoneIdentifier))"
                       ItemDropped="LeadUpdated"
+                      ItemsSelector="@((lead, zoneIdentifier) => IsInColumn(lead, zoneIdentifier))"
                       Class="d-flex flex-nowrap"
-                      Style="height: calc(100vh - 200px)">
+                      Style="height: calc(100vh - 200px);">
         <ChildContent>
             @foreach (var column in _columns)
             {
@@ -90,10 +90,18 @@
                         </MudMenu>
                     </MudToolBar>
 
+                    <!-- DropZone for each column -->
                     <MudDropZone T="Lead"
                                  Identifier="@column"
-                                 Class="flex-grow-1 overflow-y-auto hide-scrollbar p-2"
-                                 AllowReorder="true">
+                                 Class="p-2 hide-scrollbar"
+                                 AllowReorder="true"
+                                 Style="overflow-y:auto; height:calc(100vh - 250px);">
+                        <MudVirtualize T="Lead"
+                                       Items="@(SortedLeadsForColumn(column).ToList())"
+                                       ItemSize="40"
+                                       ChildContent="CardTemplate">
+                        </MudVirtualize>
+
                         @if (!DisplayedLeads.Any(lead => IsInColumn(lead, column)))
                         {
                             <MudPaper Class="pa-4 d-flex align-center justify-center" Elevation="0">
@@ -106,51 +114,6 @@
                 </MudPaper>
             }
         </ChildContent>
-
-        <ItemRenderer>
-            <MudCard Class="ma-3 rounded-lg"
-                     Elevation="1"
-                     Style="cursor: pointer; background-color: #333; ;"
-                     @onclick="@(() => ShowLeadDetails(@context))">
-
-                <MudCardHeader Style="padding:5px;display: flex; justify-content: space-between; align-items: center; gap: 10px; ">
-                    <CardHeaderContent >
-                        <MudText  Typo="Typo.h6" >
-                            @(@context.Name?.Substring(0, Math.Min(@context.Name?.Length ?? 0, 15)))
-                        </MudText>
-                    </CardHeaderContent>
-                    <CardHeaderAvatar>
-                        <div @onclick:stopPropagation>
-                            <MudMenu Dense="true" MaxHeight="200">
-                                <ActivatorContent>
-                                    <MudChip T="string"
-                                             Variant="Variant.Text"
-                                             Color="@GetColorForStatus(@context.Status)"
-                                             Size="Size.Small">
-                                        @context.Status
-                                    </MudChip>
-                                </ActivatorContent>
-                                <ChildContent>
-                                    @foreach (LeadStatus status in Enum.GetValues(typeof(LeadStatus)))
-                                    {
-                                        <MudMenuItem OnClick="@(() => UpdateLeadStatus(@context, status))">
-                                            @status
-                                        </MudMenuItem>
-                                    }
-                                </ChildContent>
-                            </MudMenu>
-                        </div>
-                    </CardHeaderAvatar>
-                </MudCardHeader>
-
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                        <MudIcon Icon="@Icons.Material.Rounded.LocalPhone" Color="Color.Info" />
-                        <MudText>@FormatPhoneNumber(@context.Phone)</MudText>
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-        </ItemRenderer>
     </MudDropContainer>
 </MudContainer>
 
@@ -158,72 +121,112 @@
     private readonly string[] _columns = { "Yangi Lidlar", "Bog'lanilgan", "Kuzatuvda", "Yakuniy Holat" };
 
     private Dictionary<string, bool> _showInvisible = new();
-    private MudDropContainer<Lead> dropContainer = default!;
+    private Dictionary<string, bool> _sortAscByColumn = new();
     private List<Lead> leads = new();
 
     private string globalSearchTerm = "";
     private string selectedSource = "";
     private string selectedCourse = "";
 
-    private bool _sortAsc;
-
     private List<string> _allSources = new() { "Telegram", "Instagram", "Referral" };
     private List<Course> _allCourses = new();
 
+    private RenderFragment<Lead> CardTemplate => lead => @<MudCard Class="ma-3 rounded-lg"
+                                                                       Elevation="1"
+                                                                       Style="cursor: pointer; background-color: #333;"
+                                                                       @onclick="@(() => ShowLeadDetails(lead))">
+        <MudCardHeader Style="padding:5px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">
+                    @(lead.Name?.Substring(0, Math.Min(lead.Name?.Length ?? 0, 15)))
+                </MudText>
+            </CardHeaderContent>
+            <CardHeaderAvatar>
+                <div @onclick:stopPropagation>
+                    <MudMenu Dense="true" MaxHeight="200">
+                        <ActivatorContent>
+                            <MudChip T="string"
+                                     Variant="Variant.Text"
+                                     Color="@GetColorForStatus(lead.Status)"
+                                     Size="Size.Small">
+                                @lead.Status
+                            </MudChip>
+                        </ActivatorContent>
+                        <ChildContent>
+                            @foreach (LeadStatus status in Enum.GetValues(typeof(LeadStatus)))
+                        {
+                            <MudMenuItem OnClick="@(() => UpdateLeadStatus(lead, status))">
+                                @status
+                            </MudMenuItem>
+                        }
+                        </ChildContent>
+                    </MudMenu>
+                </div>
+            </CardHeaderAvatar>
+        </MudCardHeader>
+
+        <MudCardContent>
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@Icons.Material.Rounded.LocalPhone" Color="Color.Info" />
+                <MudText>@FormatPhoneNumber(lead.Phone)</MudText>
+            </MudStack>
+        </MudCardContent>
+    </MudCard>;
+
     protected override async Task OnInitializedAsync()
     {
-        _allCourses = (await CourseService.GetCoursesAsync()).ToList();
-
-        foreach (var col in _columns)
-            _showInvisible[col] = false;
-
         leads = (await LeadService.GetLeadsAsync())
             .OrderByDescending(l => l.ModifiedAt)
             .ToList();
+
+        foreach (var col in _columns)
+        {
+            _showInvisible[col] = false;
+            _sortAscByColumn[col] = false;  // Default sort: descending
+        }
+        _allCourses = (await CourseService.GetCoursesAsync()).ToList();
+
     }
 
     private bool IsVisibleByFilter(Lead lead)
     {
-        string col = GetColumnForStatus(lead.Status);
-        if (!_showInvisible[col] && lead.Invisible)
-            return false;
-
+        // Global filter
         if (!string.IsNullOrWhiteSpace(globalSearchTerm))
         {
-            bool matchName = (lead.Name?.Contains(globalSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false);
-            bool matchPhone = (lead.Phone?.Contains(globalSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false);
-            if (!matchName && !matchPhone)
+            if (!(lead.Name?.Contains(globalSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) &&
+                !(lead.Phone?.Contains(globalSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+            {
                 return false;
+            }
         }
 
-        if (!string.IsNullOrEmpty(selectedSource))
+        // Source filter
+        if (!string.IsNullOrEmpty(selectedSource) &&
+            !lead.Source.ToString().Equals(selectedSource, StringComparison.OrdinalIgnoreCase))
         {
-            if (!lead.Source.ToString().Equals(selectedSource, StringComparison.OrdinalIgnoreCase))
-                return false;
+            return false;
         }
 
-        if (!string.IsNullOrEmpty(selectedCourse))
+        // Course filter
+        if (!string.IsNullOrEmpty(selectedCourse) &&
+            (lead.InterestedCourse == null || !lead.InterestedCourse.Name.Equals(selectedCourse, StringComparison.OrdinalIgnoreCase)))
         {
-            if (lead.InterestedCourse == null
-                || !lead.InterestedCourse.Name.Equals(selectedCourse, StringComparison.OrdinalIgnoreCase))
-                return false;
+            return false;
         }
 
         return true;
     }
 
-    private IEnumerable<Lead> DisplayedLeads
-    {
-        get
-        {
-            IEnumerable<Lead> query = leads.Where(x => IsVisibleByFilter(x));
-            if (_sortAsc)
-                query = query.OrderBy(l => l.ModifiedAt);
-            else
-                query = query.OrderByDescending(l => l.ModifiedAt);
 
-            return query;
-        }
+    private IEnumerable<Lead> DisplayedLeads => leads.Where(x => IsVisibleByFilter(x));
+
+    private IEnumerable<Lead> SortedLeadsForColumn(string column)
+    {
+        var columnLeads = DisplayedLeads.Where(lead => IsInColumn(lead, column));
+        if (_sortAscByColumn.TryGetValue(column, out bool asc) && asc)
+            return columnLeads.OrderBy(l => l.ModifiedAt);
+        else
+            return columnLeads.OrderByDescending(l => l.ModifiedAt);
     }
 
     private bool IsInColumn(Lead lead, string zoneIdentifier)
@@ -231,10 +234,7 @@
         return GetColumnForStatus(lead.Status) == zoneIdentifier;
     }
 
-    private void GlobalFilterChanged()
-    {
-        StateHasChanged();
-    }
+    private void GlobalFilterChanged() => StateHasChanged();
 
     private void ToggleVisibility(string column, bool value)
     {
@@ -244,60 +244,50 @@
 
     private async Task LeadUpdated(MudItemDropInfo<Lead> dropInfo)
     {
-        if (dropInfo.Item != null)
+        if (dropInfo.Item is not null)
         {
             dropInfo.Item.Status = GetStatusForColumn(dropInfo.DropzoneIdentifier);
             dropInfo.Item.ModifiedAt = DateTime.Now;
-
             await LeadService.UpdateLeadAsync(dropInfo.Item);
-
-            // Tartib maqsadida ro'yxatni qayta sort qilamiz
             leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
-            dropContainer.Refresh();
             StateHasChanged();
         }
+    }
+
+    private void SortColumnByModifiedAt(string column)
+    {
+        _sortAscByColumn[column] = !_sortAscByColumn[column];
+        StateHasChanged();
     }
 
     private async Task UpdateLeadStatus(Lead lead, LeadStatus newStatus)
     {
         lead.Status = newStatus;
         lead.ModifiedAt = DateTime.Now;
-
         await LeadService.UpdateLeadAsync(lead);
-
         leads = leads.OrderByDescending(l => l.ModifiedAt).ToList();
-        dropContainer.Refresh();
         StateHasChanged();
     }
 
-    private LeadStatus GetStatusForColumn(string column)
+    private LeadStatus GetStatusForColumn(string column) => column switch
     {
-        return column switch
-        {
-            "Yangi Lidlar" => LeadStatus.New,
-            "Bog'lanilgan" => LeadStatus.Contacted,
-            "Kuzatuvda" => LeadStatus.Recontact,
-            "Yakuniy Holat" => LeadStatus.Acquired,
-            _ => LeadStatus.New
-        };
-    }
+        "Yangi Lidlar" => LeadStatus.New,
+        "Bog'lanilgan" => LeadStatus.Contacted,
+        "Kuzatuvda" => LeadStatus.Recontact,
+        "Yakuniy Holat" => LeadStatus.Acquired,
+        _ => LeadStatus.New
+    };
 
-    private string GetColumnForStatus(LeadStatus status)
+    private string GetColumnForStatus(LeadStatus status) => status switch
     {
-        return status switch
-        {
-            LeadStatus.New => "Yangi Lidlar",
-            LeadStatus.Contacted or LeadStatus.Phone => "Bog'lanilgan",
-            LeadStatus.Recontact or LeadStatus.Registered or LeadStatus.AttendedTrialLesson => "Kuzatuvda",
-            LeadStatus.Acquired or LeadStatus.NotAcquired or LeadStatus.Lost => "Yakuniy Holat",
-            _ => "Yangi Lidlar"
-        };
-    }
+        LeadStatus.New => "Yangi Lidlar",
+        LeadStatus.Contacted or LeadStatus.Phone => "Bog'lanilgan",
+        LeadStatus.Recontact or LeadStatus.Registered or LeadStatus.AttendedTrialLesson => "Kuzatuvda",
+        LeadStatus.Acquired or LeadStatus.NotAcquired or LeadStatus.Lost => "Yakuniy Holat",
+        _ => "Yangi Lidlar"
+    };
 
-    private void ShowAddLeadDialog()
-    {
-        DialogService.Show<AddNewLeadDialog>("Yangi Lead");
-    }
+    private void ShowAddLeadDialog() => DialogService.Show<AddNewLeadDialog>("Yangi Lead");
 
     private void ShowLeadDetails(Lead lead)
     {
@@ -305,46 +295,34 @@
         DialogService.Show<LeadDetailsDialog>("Lead Details", parameters);
     }
 
-    private void SortColumnByModifiedAt(string column)
+    private Color GetColorForColumn(string column) => column switch
     {
-        _sortAsc = !_sortAsc;
-        dropContainer.Refresh();
-        StateHasChanged();
-    }
+        "Yangi Lidlar" => Color.Info,
+        "Bog'lanilgan" => Color.Warning,
+        "Kuzatuvda" => Color.Secondary,
+        "Yakuniy Holat" => Color.Success,
+        _ => Color.Default
+    };
 
-    private Color GetColorForColumn(string column)
+    private Color GetColorForStatus(LeadStatus status) => status switch
     {
-        return column switch
-        {
-            "Yangi Lidlar" => Color.Info,
-            "Bog'lanilgan" => Color.Warning,
-            "Kuzatuvda" => Color.Secondary,
-            "Yakuniy Holat" => Color.Success,
-            _ => Color.Default
-        };
-    }
-
-    private Color GetColorForStatus(LeadStatus status)
-    {
-        return status switch
-        {
-            LeadStatus.New => Color.Info,
-            LeadStatus.Phone => Color.Warning,
-            LeadStatus.Contacted => Color.Primary,
-            LeadStatus.Recontact => Color.Secondary,
-            LeadStatus.Incomplete => Color.Error,
-            LeadStatus.Registered => Color.Success,
-            LeadStatus.AttendedTrialLesson => Color.Tertiary,
-            LeadStatus.Acquired => Color.Success,
-            LeadStatus.NotAcquired => Color.Error,
-            LeadStatus.Lost => Color.Dark,
-            _ => Color.Default
-        };
-    }
+        LeadStatus.New => Color.Info,
+        LeadStatus.Phone => Color.Warning,
+        LeadStatus.Contacted => Color.Primary,
+        LeadStatus.Recontact => Color.Secondary,
+        LeadStatus.Incomplete => Color.Error,
+        LeadStatus.Registered => Color.Success,
+        LeadStatus.AttendedTrialLesson => Color.Tertiary,
+        LeadStatus.Acquired => Color.Success,
+        LeadStatus.NotAcquired => Color.Error,
+        LeadStatus.Lost => Color.Dark,
+        _ => Color.Default
+    };
 
     public static string FormatPhoneNumber(string? input)
     {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
         var regex = new Regex(@"(\d{2})[\s\-]?(\d{3})[\s\-]?(\d{4})");
         var result = regex.Replace(input, "$1 $2 $3");
         return result == input ? input : result;

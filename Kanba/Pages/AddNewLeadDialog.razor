@@ -5,42 +5,51 @@
 @inject ICourseService CourseService
 @inject MudBlazor.IDialogService DialogService
 
-<MudDialog >
+<MudDialog>
     <DialogContent>
-        <MudStack Spacing="8">
-        
+        <MudForm>
+            <MudStack Spacing="5">
+                <!-- Name -->
+                <MudTextField @bind-Value="newLead.Name" Label="Ismi (required)" Required="true" Immediate="true"
+                              HelperText="Ismni kiriting" Variant="Variant.Outlined" />
 
-            <MudTextField @bind-Value="newLead.Name" Label="Ismi (required)" Required="true" />
+                <!-- Source -->
+                <MudSelect T="string" Label="Source (required)" @bind-Value="newLead.SourceString" Required="true" Dense="true">
+                    @foreach (LeadSource src in Enum.GetValues(typeof(LeadSource)))
+                    {
+                        <MudSelectItem Value="@src.ToString()">@src</MudSelectItem>
+                    }
+                </MudSelect>
 
-            <MudSelect T="string" Label="Source (required)" @bind-Value="newLead.SourceString" Required="true" Dense="true">
-                @foreach (LeadSource src in Enum.GetValues(typeof(LeadSource)))
-                {
-                    <MudSelectItem Value="@src.ToString()">@src</MudSelectItem>
-                }
-            </MudSelect>
+                <!-- Interested Course -->
+                <MudSelect T="Course" Label="Qiziqayotgan kurs (required)" @bind-Value="newLead.InterestedCourse" Required="true" Dense="true">
+                    @foreach (var course in courses)
+                    {
+                        <MudSelectItem Value="@course">@course.Name</MudSelectItem>
+                    }
+                </MudSelect>
 
-            <MudSelect T="Course" Label="Qiziqayotgan kurs (required)" @bind-Value="newLead.InterestedCourse" Required="true" Dense="true">
-                @foreach (var course in courses)
-                {
-                    <MudSelectItem Value="@course">@course.Name</MudSelectItem>
-                }
-            </MudSelect>
+                <!-- Phone -->
+                <MudTextField @bind-Value="newLead.Phone" Label="Telefon raqami (optional)" Immediate="true"
+                              HelperText="Telefon raqamni kiriting (ixtiyoriy)" Variant="Variant.Outlined" />
 
-            <MudTextField @bind-Value="newLead.Phone" Label="Telefon raqami (optional)" />
-
-            <MudTextField @bind-Value="newLead.Address" Label="Manzili (optional)" />
-        </MudStack>
+                <!-- Address -->
+                <MudTextField @bind-Value="newLead.Address" Label="Manzili (optional)" Immediate="true"
+                              HelperText="Manzilni kiriting (ixtiyoriy)" Variant="Variant.Outlined" />
+            </MudStack>
+        </MudForm>
     </DialogContent>
+
     <DialogActions>
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Saqlash</MudButton>
-        <MudButton Color="Color.Inherit" Variant="Variant.Text" OnClick="Cancel">Bekor qilish</MudButton>
+        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Cancel">Bekor qilish</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
 
-    private LeadCreationModel newLead = new LeadCreationModel
+    private LeadCreationModel newLead = new()
         {
             Status = LeadStatus.New,
             CreatedAt = DateTime.Now,
