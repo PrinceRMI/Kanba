@@ -202,7 +202,7 @@
         if (dateRange != null)
         {
             var leadDate = lead.ModifiedAt;
-            if (leadDate < dateRange.Start || leadDate > dateRange.End)
+            if (leadDate <= dateRange.Start || leadDate >= dateRange.End)
             {
                 return false;
             }
