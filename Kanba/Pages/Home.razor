@@ -10,7 +10,6 @@
 
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-4">
-    <!-- Header with buttons and filters -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="ma-4">
         <MudButton Variant="Variant.Outlined"
                    EndIcon="@Icons.Material.Filled.Add"
@@ -135,7 +134,8 @@
                                                                        @onclick="@(() => ShowLeadDetails(lead))">
         <MudCardHeader Style="padding:5px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">
+                <MudText Typo="Typo.h6" Style="align-items: center;">
+                    
                     @(lead.Name?.Substring(0, Math.Min(lead.Name?.Length ?? 0, 15)))
                 </MudText>
             </CardHeaderContent>
@@ -174,7 +174,6 @@
 
     private bool IsVisibleByFilter(Lead lead)
     {
-        // Global filter
         if (!string.IsNullOrWhiteSpace(globalSearchTerm))
         {
             if (!(lead.Name?.Contains(globalSearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) &&
@@ -184,25 +183,22 @@
             }
         }
 
-        // Source filter
         if (!string.IsNullOrEmpty(selectedSource) &&
             !lead.Source.ToString().Equals(selectedSource, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        // Course filter
         if (!string.IsNullOrEmpty(selectedCourse) &&
             (lead.InterestedCourse == null || !lead.InterestedCourse.Name.Equals(selectedCourse, StringComparison.OrdinalIgnoreCase)))
         {
             return false;
         }
 
-        // Date Range filter
         if (dateRange != null)
         {
             var leadDate = lead.ModifiedAt;
-            if (leadDate <= dateRange.Start || leadDate >= dateRange.End)
+            if (leadDate <= dateRange.Start || leadDate >= dateRange.End.Value.AddDays(1))
             {
                 return false;
             }
@@ -215,8 +211,8 @@
     private void GlobalFilterChanged() => StateHasChanged();
     private DateRange? dateRange = new DateRange
         {
-            Start = DateTime.Now.AddDays(-7), // Default: 7 days ago
-            End = DateTime.Now // Default: today
+            Start = DateTime.Now.AddDays(-7), 
+            End = DateTime.Now 
         };
 
     protected override async Task OnInitializedAsync()
@@ -228,7 +224,7 @@
         foreach (var col in _columns)
         {
             _showInvisible[col] = false;
-            _sortAscByColumn[col] = false;  // Default sort: descending
+            _sortAscByColumn[col] = false;  
         }
         _allCourses = (await CourseService.GetCoursesAsync()).ToList();
 

@@ -128,7 +128,7 @@ h2 {
     justify-content:space-evenly;
 }
 .mud-typography {
-    text-align: right;
+    text-align: center !important;
 }
 
 .loading-progress {
